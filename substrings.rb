@@ -3,7 +3,9 @@ words = "Howdy partner, sit down! How's it going?"
 
 def substrings(words, dictionary)
     dictionary.reduce(Hash.new(0)) do | acc, dict_word |
-        words.split.each {|word| acc[dict_word] += 1 if word.include?(dict_word)}
+        words.split.each do |word| 
+            acc[dict_word] += 1 if word.downcase.include?(dict_word)
+        end
         acc
     end
 end
