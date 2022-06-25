@@ -1,11 +1,17 @@
 class Cell
   @@cell_count = 0
-  attr_accessor :value
+  attr_reader :value, :locked
 
   def initialize
     @cell_id = @@cell_count
     @@cell_count += 1
-    self.value = '_'
+    @locked = false
+    @value = '_'
+  end
+
+  def value=(new_value)
+    @value = new_value unless @locked
+    @locked = true
   end
 end
 
@@ -38,7 +44,15 @@ class Game
   def play_turn
     draw_board('GAME', @cells.map(&:value))
     draw_board('KEY', (1..9).to_a)
-    selection = get_player_selection
+    selection = nil
+    loop do
+      selection = get_player_selection
+      if @cells[selection - 1].locked
+        puts 'That cell was already played. Pick another one!'
+        next
+      end
+      break
+    end
     @cells[selection - 1].value = @current_player == @player1 ? 'X' : 'O'
     @current_player = @current_player == @player1 ? @player2 : @player1
   end
