@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 class Cell
   attr_reader :value, :locked
 
@@ -20,8 +22,6 @@ class Player
     @marker = player_number == 1 ? 'X' : 'O'
     self.played_cells = []
   end
-
-  def move(square_number); end
 end
 
 class Game
@@ -41,16 +41,20 @@ class Game
       next unless check_for_winner
 
       draw_boards
-      puts '----- WINNER FOUND. END OF GAME ------'
+      puts "\e[1;31m#{if @current_player == @player2
+                        "Player 1 (X's)"
+                      else
+                        "Player 2 (O's)"
+                      end} WINS!\e[0m Thanks for playing!"
+      # puts "\e[1;31m This is red text \e[0m"
       break
     end
-    puts 'Thanks for playing!'
   end
 
   def draw_boards
     draw_board('GAME', @cells.map(&:value))
     draw_board('KEY', (1..9).to_a.map do |num|
-                        @cells[num - 1].locked ? '' : "#{num}"
+                        @cells[num - 1].locked ? '' : num.to_s
                       end)
   end
 
@@ -64,7 +68,7 @@ class Game
     draw_boards
     selection = nil
     loop do
-      selection = get_player_selection
+      selection = player_selection
       if @cells[selection - 1].locked
         puts '--- ! That cell was already played. Pick another one! ---'
         next
@@ -97,7 +101,7 @@ class Game
     print "\n\n\n"
   end
 
-  def get_player_selection
+  def player_selection
     puts 'Input a number (1-9) that corresponds to the square you want to play'
     gets.chomp.to_i
   end
