@@ -1,10 +1,7 @@
 class Cell
-  @@cell_count = 0
   attr_reader :value, :locked
 
   def initialize
-    @cell_id = @@cell_count
-    @@cell_count += 1
     @locked = false
     @value = '_'
   end
