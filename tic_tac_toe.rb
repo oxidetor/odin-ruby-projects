@@ -1,5 +1,11 @@
 # frozen_string_literal: true
 
+module Colorize
+  def colourize_text(text, color)
+    "\e[1;#{color}m#{text}\e[0m"
+  end
+end
+
 class Cell
   attr_reader :value, :locked
 
@@ -15,20 +21,24 @@ class Cell
 end
 
 class Player
-  attr_accessor :played_cells
+  attr_accessor :played_cells, :player_colour, :symbol, :player_number
 
-  def initialize(player_number)
+  def initialize(player_number, player_colour, symbol)
+    @player_colour = player_colour
     @player_number = player_number
-    @marker = player_number == 1 ? 'X' : 'O'
+    @symbol = symbol
     self.played_cells = []
   end
 end
 
 class Game
+  include Colorize
+
   def initialize(player1, player2)
     @player1 = player1
     @player2 = player2
     @current_player = player1
+    @other_player = player2
     @cells = []
     9.times do
       @cells.push(Cell.new)
@@ -40,19 +50,25 @@ class Game
       play_turn
       next unless check_for_winner
 
-      draw_boards
-      puts "\e[1;31m#{if @current_player == @player2
-                        "Player 1 (X's)"
-                      else
-                        "Player 2 (O's)"
-                      end} WINS!\e[0m Thanks for playing!"
+      draw_board
+      puts colourize_text("#{if @current_player == @player2
+				                           "Player 1 (X's)"
+			                          else
+				                           "Player 2 (O's)"
+                             end} WINS!", @other_player.player_colour)
+      # puts "\e[1;31m#{if @current_player == @player2
+      #                   "Player 1 (X's)"
+      #                 else
+      #                   "Player 2 (O's)"
+      #                 end} WINS!\e[0m Thanks for playing!"
       break
     end
   end
 
   def update_cells(selection)
-    @cells[selection - 1].value = @current_player == @player1 ? 'X' : 'O'
+    @cells[selection - 1].value = @current_player.player_number
     @current_player = @current_player == @player1 ? @player2 : @player1
+    @other_player = @other_player == @player1 ? @player2 : @player1
     @current_player.played_cells.push(selection - 1)
   end
 
@@ -97,7 +113,17 @@ class Game
         print "\n   |\n   |\n#{row}  |"
         row += 1
       end
-      print "\t#{value}"
+      print "\t#{
+				case value
+				when @player1.player_number
+					 colourize_text(@player1.symbol, @player1.player_colour)
+				when @player2.player_number
+					 colourize_text(@player2.symbol, @player2.player_colour)
+
+				else
+					 value
+				end
+		}"
     end
     print "\n\n\n"
   end
@@ -125,7 +151,7 @@ class Game
   end
 end
 
-player1 = Player.new(1)
-player2 = Player.new(2)
+player1 = Player.new(1, '34', 'X')
+player2 = Player.new(2, '33', 'O')
 game = Game.new(player1, player2)
 game.play_game
