@@ -46,16 +46,8 @@ class Game
                       else
                         "Player 2 (O's)"
                       end} WINS!\e[0m Thanks for playing!"
-      # puts "\e[1;31m This is red text \e[0m"
       break
     end
-  end
-
-  def draw_boards
-    draw_board('GAME', @cells.map(&:value))
-    draw_board('KEY', (1..9).to_a.map do |num|
-                        @cells[num - 1].locked ? '' : num.to_s
-                      end)
   end
 
   def update_cells(selection)
@@ -65,10 +57,15 @@ class Game
   end
 
   def play_turn
-    draw_boards
+    draw_board
     selection = nil
     loop do
-      selection = player_selection
+      board_index = player_selection
+      unless valid_board_index?(board_index)
+        puts '--- Please enter a valid column and row index (e.g; "A2" or "b3")'
+        next
+      end
+      selection = board_index_to_cell(board_index)
       if @cells[selection - 1].locked
         puts '--- ! That cell was already played. Pick another one! ---'
         next
@@ -76,8 +73,6 @@ class Game
       break
     end
     update_cells(selection)
-
-    p @current_player.played_cells
   end
 
   def check_for_winner
@@ -92,18 +87,41 @@ class Game
     false
   end
 
-  def draw_board(type, values)
-    print "\t----------\t#{type}\t----------"
+  def draw_board
+    values = @cells.map(&:value)
+    print "\n   \tA\tB\tC\t\n"
+    print '    ______________________'
+    row = 1
     values.each_with_index do |value, index|
-      print "\n\n\n" if (index % 3).zero?
-      print "\t#{value}\t"
+      if (index % 3).zero?
+        print "\n   |\n   |\n#{row}  |"
+        row += 1
+      end
+      print "\t#{value}"
     end
     print "\n\n\n"
   end
 
   def player_selection
-    puts 'Input a number (1-9) that corresponds to the square you want to play'
-    gets.chomp.to_i
+    puts 'Input a column+row index for the square you want to play (example: "A2" or "a2")'
+    gets.chomp.upcase
+  end
+
+  def board_index_to_cell(board_index)
+    case board_index[0]
+    when 'A'
+      (board_index[1].to_i - 1) * 3 + 1
+    when 'B'
+      (board_index[1].to_i - 1) * 3 + 2
+    when 'C'
+      (board_index[1].to_i - 1) * 3 + 3
+    end
+  end
+
+  def valid_board_index?(board_index)
+    valid_rows = %w[1 2 3]
+    valid_columns = %w[A B C]
+    valid_columns.include?(board_index[0]) && valid_rows.include?(board_index[1]) && board_index.length == 2
   end
 end
 
