@@ -87,7 +87,7 @@ class Game
       [0, 4, 8], [2, 4, 6]
     ]
     win_conditions.each do |win_condition|
-      return true if (@current_player.played_cells & win_condition).any? && @current_player.played_cells.size >= 3
+      return true if (@current_player.played_cells & win_condition).size >= 3
     end
     false
   end
