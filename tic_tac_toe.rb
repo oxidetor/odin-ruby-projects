@@ -7,10 +7,6 @@ class Cell
     @@cell_count += 1
     self.value = '_'
   end
-
-  def value=(new_value)
-    @value ||= new_value
-  end
 end
 
 class Player
@@ -34,7 +30,9 @@ class Game
   end
 
   def play_game
-    play_turn
+    loop do
+      play_turn
+    end
   end
 
   def play_turn
@@ -42,12 +40,13 @@ class Game
     draw_board('KEY', (1..9).to_a)
     selection = get_player_selection
     @cells[selection - 1].value = @current_player == @player1 ? 'X' : 'O'
+    @current_player = @current_player == @player1 ? @player2 : @player1
   end
 
   def draw_board(type, values)
     print "\t----------\t#{type}\t----------"
     values.each_with_index do |value, index|
-      print "\n\n\n" if index % 3 == 0
+      print "\n\n\n" if (index % 3).zero?
       print "\t#{value}\t"
     end
     print "\n\n\n"
