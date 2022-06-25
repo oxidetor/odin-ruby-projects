@@ -43,12 +43,14 @@ class Game
 
   def play_turn
     draw_board('GAME', @cells.map(&:value))
-    draw_board('KEY', (1..9).to_a)
+    draw_board('KEY', (1..9).to_a.map do |num|
+                        @cells[num - 1].locked ? '' : "#{num}"
+                      end)
     selection = nil
     loop do
       selection = get_player_selection
       if @cells[selection - 1].locked
-        puts 'That cell was already played. Pick another one!'
+        puts '--- ! That cell was already played. Pick another one! ---'
         next
       end
       break
