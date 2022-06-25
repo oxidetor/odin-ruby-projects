@@ -26,6 +26,7 @@ class Game
   def initialize(player1, player2)
     @player1 = player1
     @player2 = player2
+    @current_player = player1
     @cells = []
     9.times do
       @cells.push(Cell.new)
@@ -39,6 +40,8 @@ class Game
   def play_turn
     draw_board('GAME', @cells.map(&:value))
     draw_board('KEY', (1..9).to_a)
+    selection = get_player_selection
+    @cells[selection - 1].value = @current_player == @player1 ? 'X' : 'O'
   end
 
   def draw_board(type, values)
@@ -48,6 +51,11 @@ class Game
       print "\t#{value}\t"
     end
     print "\n\n\n"
+  end
+
+  def get_player_selection
+    puts 'Input a number (1-9) that corresponds to the square you want to play'
+    gets.chomp.to_i
   end
 end
 
