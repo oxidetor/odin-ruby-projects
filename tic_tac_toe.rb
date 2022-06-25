@@ -16,9 +16,12 @@ class Cell
 end
 
 class Player
+  attr_accessor :played_cells
+
   def initialize(player_number)
     @player_number = player_number
     @marker = player_number == 1 ? 'X' : 'O'
+    self.played_cells = []
   end
 
   def move(square_number); end
@@ -38,14 +41,30 @@ class Game
   def play_game
     loop do
       play_turn
+      next unless check_for_winner
+
+      draw_boards
+      puts '----- WINNER FOUND. END OF GAME ------'
+      break
     end
+    puts 'Thanks for playing!'
   end
 
-  def play_turn
+  def draw_boards
     draw_board('GAME', @cells.map(&:value))
     draw_board('KEY', (1..9).to_a.map do |num|
                         @cells[num - 1].locked ? '' : "#{num}"
                       end)
+  end
+
+  def update_cells(selection)
+    @cells[selection - 1].value = @current_player == @player1 ? 'X' : 'O'
+    @current_player = @current_player == @player1 ? @player2 : @player1
+    @current_player.played_cells.push(selection - 1)
+  end
+
+  def play_turn
+    draw_boards
     selection = nil
     loop do
       selection = get_player_selection
@@ -55,8 +74,21 @@ class Game
       end
       break
     end
-    @cells[selection - 1].value = @current_player == @player1 ? 'X' : 'O'
-    @current_player = @current_player == @player1 ? @player2 : @player1
+    update_cells(selection)
+
+    p @current_player.played_cells
+  end
+
+  def check_for_winner
+    win_conditions = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ]
+    win_conditions.each do |win_condition|
+      return true if (@current_player.played_cells & win_condition).any? && @current_player.played_cells.size >= 3
+    end
+    false
   end
 
   def draw_board(type, values)
