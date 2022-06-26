@@ -58,11 +58,9 @@ class Game
   def play_game
     loop do
       play_turn
-      if check_for_winner.any?
-        display_game_result('WINNER')
-        break
-      elsif check_for_draw
-        display_game_result('DRAW')
+      if check_for_winner.any? || check_for_draw
+        draw_board
+        display_game_result
         break
       end
       switch_current_player
@@ -74,18 +72,16 @@ class Game
     @cells.all?(&:locked)
   end
 
-  def display_game_result(result_type)
-    draw_board
-    case result_type
-    when 'WINNER'
+  def display_game_result
+    if check_for_winner.any?
       puts bold_text(colourize_text("#{@current_player} WINS!\n", @current_player.colour))
-    when 'DRAW'
+    else
       puts bold_text("IT'S A DRAW\n")
     end
   end
 
   def update_cells(selection)
-    @cells[selection - 1].value = @current_player.number
+    @cells[selection - 1].value = @current_player.symbol
     @current_player.played_cells.push(selection - 1)
   end
 
@@ -152,20 +148,22 @@ class Game
         print "\t#{highlight_text(' ' + bold_text(@current_player.symbol) +
         ' ', @current_player.colour)} "
       else
-        print "\t #{
-					case value
-					when @current_player.number
-						 colourize_text(@current_player.symbol, @current_player.colour)
-					when @other_player.number
-						 colourize_text(@other_player.symbol, @other_player.colour)
-
-					else
-						 value
-					end
-			} "
+        print "\t #{decorate_symbol(value)} "
       end
     end
     print "\n\n\n"
+  end
+
+  def decorate_symbol(value)
+    case value
+    when @current_player.symbol
+      colourize_text(@current_player.symbol, @current_player.colour)
+    when @other_player.symbol
+      colourize_text(@other_player.symbol, @other_player.colour)
+
+    else
+      value
+    end
   end
 
   def get_player_selection
