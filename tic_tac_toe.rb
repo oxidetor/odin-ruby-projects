@@ -7,7 +7,11 @@ module Colorize
   end
 
   def highlight_text(text, color)
-    "\u001b[1m\u001b[#{color.to_i + 10};1m#{text}\u001b[0m"
+    "\u001b[#{color.to_i + 10};1m#{text}\u001b[0m"
+  end
+
+  def bold_text(text)
+    "\u001b[1m#{text}"
   end
 end
 
@@ -26,13 +30,17 @@ class Cell
 end
 
 class Player
-  attr_accessor :played_cells, :player_colour, :symbol, :player_number
+  attr_accessor :played_cells, :colour, :symbol, :number
 
-  def initialize(player_number, player_colour, symbol)
-    @player_colour = player_colour
-    @player_number = player_number
+  def initialize(number, colour, symbol)
+    @colour = colour
+    @number = number
     @symbol = symbol
     self.played_cells = []
+  end
+
+  def to_s
+    "Player #{@number} (#{@symbol}'s)"
   end
 end
 
@@ -56,17 +64,13 @@ class Game
       next unless check_for_winner.any?
 
       draw_board
-      puts colourize_text("#{if @current_player == @player2
-																               "Player 1 (X's)"
-															              else
-																               "Player 2 (O's)"
-                             end} WINS!", @other_player.player_colour)
+      puts bold_text(colourize_text("#{@other_player} WINS!", @other_player.colour))
       break
     end
   end
 
   def update_cells(selection)
-    @cells[selection - 1].value = @current_player.player_number
+    @cells[selection - 1].value = @current_player.number
     @current_player = @current_player == @player1 ? @player2 : @player1
     @other_player = @other_player == @player1 ? @player2 : @player1
     @current_player.played_cells.push(selection - 1)
@@ -75,15 +79,16 @@ class Game
   def play_turn
     draw_board
     selection = nil
+    print colourize_text("It's your turn, #{@current_player}\n", @current_player.colour)
     loop do
-      board_index = player_selection
+      board_index = get_player_selection
       unless valid_board_index?(board_index)
-        puts '--- Please enter a valid column and row index (e.g; "A2" or "b3")'
+        puts colourize_text("\nInvalid column and row index. Try again!", '31')
         next
       end
       selection = board_index_to_cell(board_index)
       if @cells[selection - 1].locked
-        puts '--- ! That cell was already played. Pick another one! ---'
+        puts colourize_text("\nThat cell was already played. Pick another!", '31')
         next
       end
       break
@@ -106,7 +111,7 @@ class Game
 
   def draw_board
     values = @cells.map(&:value)
-    print "\n   \t A\t B\t C\t\n    ______________________"
+    print "\n\n   \t A\t B\t C\t\n    ______________________"
     row = 1
     values.each_with_index do |value, index|
       if (index % 3).zero?
@@ -114,15 +119,14 @@ class Game
         row += 1
       end
       if check_for_winner.include?(index)
-        print "\t#{highlight_text(' ' + @other_player.symbol + ' ', @other_player.player_colour)} "
-        # print "\t#{colourize_text(@other_player.symbol, (@other_player.player_colour.to_i + 10).to_s)}"
+        print "\t#{highlight_text(' ' + bold_text(@other_player.symbol) + ' ', @other_player.colour)} "
       else
         print "\t #{
 					case value
-					when @player1.player_number
-						 colourize_text(@player1.symbol, @player1.player_colour)
-					when @player2.player_number
-						 colourize_text(@player2.symbol, @player2.player_colour)
+					when @player1.number
+						 colourize_text(@player1.symbol, @player1.colour)
+					when @player2.number
+						 colourize_text(@player2.symbol, @player2.colour)
 
 					else
 						 value
@@ -133,8 +137,10 @@ class Game
     print "\n\n\n"
   end
 
-  def player_selection
-    puts 'Input a column+row index for the square you want to play (example: "A2" or "a2")'
+  def get_player_selection
+    print "\nEnter a column and row index for the cell you want to play" \
+          "\n(example: 'A2' or 'c3')\n" \
+          "\nYour Selection => "
     gets.chomp.upcase
   end
 
@@ -152,7 +158,9 @@ class Game
   def valid_board_index?(board_index)
     valid_rows = %w[1 2 3]
     valid_columns = %w[A B C]
-    valid_columns.include?(board_index[0]) && valid_rows.include?(board_index[1]) && board_index.length == 2
+    valid_columns.include?(board_index[0]) &&
+      valid_rows.include?(board_index[1]) &&
+      board_index.length == 2
   end
 end
 
