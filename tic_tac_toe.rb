@@ -2,7 +2,6 @@
 
 module Colorize
   def colourize_text(text, color)
-    # "\e[1;#{color}m#{text}\e[0m"
     "\u001b[#{color}m#{text}\u001b[0m"
   end
 
@@ -48,8 +47,6 @@ class Game
   include Colorize
 
   def initialize(player1, player2)
-    @player1 = player1
-    @player2 = player2
     @current_player = player1
     @other_player = player2
     @cells = []
@@ -149,21 +146,18 @@ class Game
   def draw_board
     values = @cells.map(&:value)
     print "\n\n   \t A\t B\t C\t\n    ______________________"
-    row = 1
     values.each_with_index do |value, index|
-      if (index % 3).zero?
-        print "\n   |\n   |\n#{row}  |"
-        row += 1
-      end
+      print "\n   |\n   |\n#{index / 3}  |" if (index % 3).zero?
       if check_for_winner.include?(index)
-        print "\t#{highlight_text(' ' + bold_text(@current_player.symbol) + ' ', @current_player.colour)} "
+        print "\t#{highlight_text(' ' + bold_text(@current_player.symbol) +
+        ' ', @current_player.colour)} "
       else
         print "\t #{
 					case value
-					when @player1.number
-						 colourize_text(@player1.symbol, @player1.colour)
-					when @player2.number
-						 colourize_text(@player2.symbol, @player2.colour)
+					when @current_player.number
+						 colourize_text(@current_player.symbol, @current_player.colour)
+					when @other_player.number
+						 colourize_text(@other_player.symbol, @other_player.colour)
 
 					else
 						 value
