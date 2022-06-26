@@ -140,21 +140,15 @@ class Game
   end
 
   def draw_board
-    values = @cells.map(&:value)
     print "\n\n   \t A\t B\t C\t\n    ______________________"
-    values.each_with_index do |value, index|
+    @cells.map(&:value).each_with_index do |value, index|
       print "\n   |\n   |\n#{index / 3}  |" if (index % 3).zero?
-      if check_for_winner.include?(index)
-        print "\t#{highlight_text(' ' + bold_text(@current_player.symbol) +
-        ' ', @current_player.colour)} "
-      else
-        print "\t #{decorate_symbol(value)} "
-      end
+      print "\t#{check_for_winner.include?(index) ? highlight_cell : " #{color_cell(value)} "}"
     end
     print "\n\n\n"
   end
 
-  def decorate_symbol(value)
+  def color_cell(value)
     case value
     when @current_player.symbol
       colourize_text(@current_player.symbol, @current_player.colour)
@@ -164,6 +158,10 @@ class Game
     else
       value
     end
+  end
+
+  def highlight_cell
+    highlight_text(" #{bold_text(@current_player.symbol)} ", @current_player.colour)
   end
 
   def get_player_selection
