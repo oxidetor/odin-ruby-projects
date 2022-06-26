@@ -19,7 +19,7 @@ class Cell
 
   def initialize
     @locked = false
-    @value = '_'
+    @value = '-'
   end
 
   def value=(new_value)
@@ -140,12 +140,13 @@ class Game
   end
 
   def draw_board
-    print "\n\n   \t A\t B\t C\t\n    ______________________"
+    print "\n\n\t      A     B     C\n\t _______________________"
     @cells.map(&:value).each_with_index do |value, index|
-      print "\n   |\n   |\n#{index / 3}  |" if (index % 3).zero?
-      print "\t#{check_for_winner.include?(index) ? highlight_cell : " #{color_cell(value)} "}"
+      print "\n\t|                       |\n\t|                       |\n    #{index / 3 + 1}\t| " if (index % 3).zero?
+      print "   #{check_for_winner.include?(index) ? highlight_cell : " #{color_cell(value)} "}"
+      print '    |' if (index % 3) == 2
     end
-    print "\n\n\n"
+    print "\n\t|                       |\n\t|_______________________|\n\n\n"
   end
 
   def color_cell(value)
