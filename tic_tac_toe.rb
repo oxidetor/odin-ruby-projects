@@ -61,19 +61,39 @@ class Game
   def play_game
     loop do
       play_turn
-      next unless check_for_winner.any?
+      if check_for_winner.any?
+        display_game_result('WINNER')
+        break
+      elsif check_for_draw
+        display_game_result('DRAW')
+        break
+      end
+      switch_current_player
+      next
+    end
+  end
 
-      draw_board
-      puts bold_text(colourize_text("#{@other_player} WINS!", @other_player.colour))
-      break
+  def check_for_draw
+    @cells.all?(&:locked)
+  end
+
+  def display_game_result(result_type)
+    draw_board
+    case result_type
+    when 'WINNER'
+      puts bold_text(colourize_text("#{@current_player} WINS!\n", @current_player.colour))
+    when 'DRAW'
+      puts bold_text("IT'S A DRAW\n")
     end
   end
 
   def update_cells(selection)
     @cells[selection - 1].value = @current_player.number
-    @current_player = @current_player == @player1 ? @player2 : @player1
-    @other_player = @other_player == @player1 ? @player2 : @player1
     @current_player.played_cells.push(selection - 1)
+  end
+
+  def switch_current_player
+    @current_player, @other_player = @other_player, @current_player
   end
 
   def play_turn
@@ -81,19 +101,36 @@ class Game
     selection = nil
     print colourize_text("It's your turn, #{@current_player}\n", @current_player.colour)
     loop do
-      board_index = get_player_selection
-      unless valid_board_index?(board_index)
-        puts colourize_text("\nInvalid column and row index. Try again!", '31')
-        next
-      end
-      selection = board_index_to_cell(board_index)
-      if @cells[selection - 1].locked
-        puts colourize_text("\nThat cell was already played. Pick another!", '31')
-        next
-      end
+      selection = get_player_selection
+      next unless valid_player_selection?(selection)
+
+      update_cells(board_index_to_cell(selection))
       break
     end
-    update_cells(selection)
+  end
+
+  def valid_player_selection?(selection)
+    unless valid_board_index?(selection)
+      display_error('invalid index')
+      return false
+    end
+    cell_addr = board_index_to_cell(selection) - 1
+    if @cells[cell_addr].locked
+      display_error('cell locked')
+      return false
+    end
+    true
+  end
+
+  def display_error(type)
+    case type
+    when 'invalid index'
+      puts colourize_text("\nInvalid column and row index. Try again!", '31')
+    when 'cell locked'
+      puts colourize_text("\nThat cell was already played. Pick another!", '31')
+    else
+      puts colourize_text('Error!', '31')
+    end
   end
 
   def check_for_winner
@@ -119,7 +156,7 @@ class Game
         row += 1
       end
       if check_for_winner.include?(index)
-        print "\t#{highlight_text(' ' + bold_text(@other_player.symbol) + ' ', @other_player.colour)} "
+        print "\t#{highlight_text(' ' + bold_text(@current_player.symbol) + ' ', @current_player.colour)} "
       else
         print "\t #{
 					case value
