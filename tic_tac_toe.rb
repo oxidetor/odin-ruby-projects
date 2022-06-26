@@ -2,7 +2,12 @@
 
 module Colorize
   def colourize_text(text, color)
-    "\e[1;#{color}m#{text}\e[0m"
+    # "\e[1;#{color}m#{text}\e[0m"
+    "\u001b[#{color}m#{text}\u001b[0m"
+  end
+
+  def highlight_text(text, color)
+    "\u001b[1m\u001b[#{color.to_i + 10};1m#{text}\u001b[0m"
   end
 end
 
@@ -48,19 +53,14 @@ class Game
   def play_game
     loop do
       play_turn
-      next unless check_for_winner
+      next unless check_for_winner.any?
 
       draw_board
       puts colourize_text("#{if @current_player == @player2
-				                           "Player 1 (X's)"
-			                          else
-				                           "Player 2 (O's)"
+																               "Player 1 (X's)"
+															              else
+																               "Player 2 (O's)"
                              end} WINS!", @other_player.player_colour)
-      # puts "\e[1;31m#{if @current_player == @player2
-      #                   "Player 1 (X's)"
-      #                 else
-      #                   "Player 2 (O's)"
-      #                 end} WINS!\e[0m Thanks for playing!"
       break
     end
   end
@@ -98,32 +98,37 @@ class Game
       [0, 4, 8], [2, 4, 6]
     ]
     win_conditions.each do |win_condition|
-      return true if (@current_player.played_cells & win_condition).size >= 3
+      winning_cells = @current_player.played_cells & win_condition
+      return winning_cells if winning_cells.size >= 3
     end
-    false
+    []
   end
 
   def draw_board
     values = @cells.map(&:value)
-    print "\n   \tA\tB\tC\t\n"
-    print '    ______________________'
+    print "\n   \t A\t B\t C\t\n    ______________________"
     row = 1
     values.each_with_index do |value, index|
       if (index % 3).zero?
         print "\n   |\n   |\n#{row}  |"
         row += 1
       end
-      print "\t#{
-				case value
-				when @player1.player_number
-					 colourize_text(@player1.symbol, @player1.player_colour)
-				when @player2.player_number
-					 colourize_text(@player2.symbol, @player2.player_colour)
+      if check_for_winner.include?(index)
+        print "\t#{highlight_text(' ' + @other_player.symbol + ' ', @other_player.player_colour)} "
+        # print "\t#{colourize_text(@other_player.symbol, (@other_player.player_colour.to_i + 10).to_s)}"
+      else
+        print "\t #{
+					case value
+					when @player1.player_number
+						 colourize_text(@player1.symbol, @player1.player_colour)
+					when @player2.player_number
+						 colourize_text(@player2.symbol, @player2.player_colour)
 
-				else
-					 value
-				end
-		}"
+					else
+						 value
+					end
+			} "
+      end
     end
     print "\n\n\n"
   end
