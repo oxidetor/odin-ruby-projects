@@ -140,13 +140,27 @@ class Game
   end
 
   def draw_board
-    print "\n\n\t      A     B     C\n\t _______________________"
+    print "\n\n\t#{repeat(' ', 6)}A#{repeat(' ', 5)}B" \
+          "#{repeat(' ', 6)}C\n\t #{repeat('_', 23)}"
     @cells.map(&:value).each_with_index do |value, index|
-      print "\n\t|                       |\n\t|                       |\n    #{index / 3 + 1}\t| " if (index % 3).zero?
-      print "   #{check_for_winner.include?(index) ? highlight_cell : " #{color_cell(value)} "}"
+      if (index % 3).zero?
+        print "\n\t|#{repeat(' ', 23)}|\n\t|#{repeat(' ', 23)}|" \
+              "\n    #{index / 3 + 1}\t| "
+      end
+      print "   #{if check_for_winner.include?(index)
+                    highlight_cell
+                  else
+                    " #{color_cell(value)} "
+                  end}"
       print '    |' if (index % 3) == 2
     end
-    print "\n\t|                       |\n\t|_______________________|\n\n\n"
+    print "\n\t|#{repeat(' ', 23)}|\n\t|#{repeat('_', 23)}|\n\n\n"
+  end
+
+  def repeat(char, times)
+    result = ''
+    times.times { result += char }
+    result
   end
 
   def color_cell(value)
