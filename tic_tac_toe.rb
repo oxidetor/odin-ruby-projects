@@ -94,16 +94,18 @@ class Game
 
   def draw_board
     print "\n\n\t#{' ' * 6}A#{' ' * 5}B#{' ' * 5}C\n\t #{'_' * 23}"
-    @cells.map(&:value).each_with_index do |value, index|
-      print "\n\t|#{' ' * 23}|\n\t|#{' ' * 23}|\n    #{index / 3 + 1}\t| " if (index % 3).zero?
-      print "   #{if get_winning_combo(@current_player.played_cells).include?(index)
-                    highlight_cell
-                  else
-                    " #{color_cell(value)} "
-                  end}"
-      print '    |' if (index % 3) == 2
-    end
+    @cells.map(&:value).each_with_index { |value, index| draw_cell(value, index) }
     print "\n\t|#{' ' * 23}|\n\t|#{'_' * 23}|\n\n\n"
+  end
+
+  def draw_cell(value, index)
+    print "\n\t|#{' ' * 23}|\n\t|#{' ' * 23}|\n    #{index / 3 + 1}\t| " if (index % 3).zero?
+    print "   #{if get_winning_combo(@current_player.played_cells).include?(index)
+                  highlight_cell
+                else
+                  " #{color_cell(value)} "
+                end}"
+    print '    |' if (index % 3) == 2
   end
 
   def get_player_selection
