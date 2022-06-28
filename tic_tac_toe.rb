@@ -93,19 +93,54 @@ class Game
   end
 
   def draw_board
-    print "\n\n\t#{' ' * 6}A#{' ' * 5}B#{' ' * 5}C\n\t #{'_' * 23}"
-    @cells.map(&:value).each_with_index { |value, index| draw_cell(value, index) }
-    print "\n\t|#{' ' * 23}|\n\t|#{'_' * 23}|\n\n\n"
+    draw_column_indices
+    draw_top_border
+    draw_empty_board_lines(2)
+    draw_board_data
+    draw_bottom_border
   end
 
-  def draw_cell(value, index)
-    print "\n\t|#{' ' * 23}|\n\t|#{' ' * 23}|\n    #{index / 3 + 1}\t| " if (index % 3).zero?
-    print "   #{if get_winning_combo(@current_player.played_cells).include?(index)
-                  highlight_cell
-                else
-                  " #{color_cell(value)} "
-                end}"
-    print '    |' if (index % 3) == 2
+  def draw_column_indices
+    print "\n#{' ' * 12}A#{' ' * 5}B#{' ' * 5}C\n"
+  end
+
+  def draw_empty_board_lines(lines)
+    print("\n#{' ' * 6}|#{' ' * 23}|" * lines)
+  end
+
+  def draw_bottom_border
+    print "\n#{' ' * 6}|#{'_' * 23}|\n\n\n"
+  end
+
+  def draw_top_border
+    print "#{' ' * 7}#{'_' * 23}"
+  end
+
+  def draw_board_data
+    @cells.map(&:value).each_with_index do |value, index|
+      draw_row_index(index) if (index % 3).zero?
+      draw_cell_value(value, index)
+      if (index % 3) == 2
+        draw_right_border
+        draw_empty_board_lines(index == 8 ? 1 : 2)
+      end
+    end
+  end
+
+  def draw_row_index(index)
+    print "\n#{' ' * 3}#{index / 3 + 1}#{' ' * 2}|#{' ' * 1}"
+  end
+
+  def draw_right_border
+    print "#{' ' * 4}|"
+  end
+
+  def draw_cell_value(value, index)
+    print "#{' ' * 3}#{if get_winning_combo(@current_player.played_cells).include?(index)
+                         highlight_cell
+                       else
+                         "#{' ' * 1}#{color_cell(value)}#{' ' * 1}"
+                       end}"
   end
 
   def get_player_selection
