@@ -44,12 +44,105 @@ class Player
   end
 end
 
+class Board
+  include TextUtilities
+
+  def draw_board(game)
+    draw_column_indices
+    draw_top_border
+    draw_empty_board_lines(2)
+    inject_game_data(game)
+    draw_bottom_border
+  end
+
+  def draw_column_indices
+    print "\n#{' ' * 12}A#{' ' * 5}B#{' ' * 5}C\n"
+  end
+
+  def draw_top_border
+    print "#{' ' * 7}#{'_' * 23}"
+  end
+
+  def draw_empty_board_lines(lines)
+    print("\n#{' ' * 6}|#{' ' * 23}|" * lines)
+  end
+
+  def inject_game_data(game)
+    game.cells.map(&:value).each_with_index do |value, index|
+      draw_row_index(index) if (index % 3).zero?
+      draw_cell_value(value, index, game)
+      if (index % 3) == 2
+        draw_right_border
+        draw_empty_board_lines(index == 8 ? 1 : 2)
+      end
+    end
+  end
+
+  def draw_row_index(index)
+    print "\n#{' ' * 3}#{index / 3 + 1}#{' ' * 2}|#{' ' * 1}"
+  end
+
+  def draw_right_border
+    print "#{' ' * 4}|"
+  end
+
+  def draw_cell_value(value, index, game)
+    print "#{' ' * 3}#{if game.get_winning_combo(game.current_player.played_cells).include?(index)
+                         highlight_cell(game.current_player)
+                       else
+                         "#{' ' * 1}#{color_cell(value, game.current_player, game.other_player)}#{' ' * 1}"
+                       end}"
+  end
+
+  def draw_bottom_border
+    print "\n#{' ' * 6}|#{'_' * 23}|\n\n\n"
+  end
+
+  def color_cell(value, current_player, other_player)
+    case value
+    when current_player.symbol
+      colorize_text(current_player.symbol, current_player.color)
+    when other_player.symbol
+      colorize_text(other_player.symbol, other_player.color)
+
+    else
+      value
+    end
+  end
+
+  def highlight_cell(current_player)
+    highlight_text(" #{bold_text(current_player.symbol)} ", current_player.color)
+  end
+
+  def valid_board_index?(board_index)
+    valid_rows = %w[1 2 3]
+    valid_columns = %w[A B C]
+    valid_columns.include?(board_index[0]) &&
+      valid_rows.include?(board_index[1]) &&
+      board_index.length == 2
+  end
+
+  def board_index_to_cell_index(board_index)
+    case board_index[0]
+    when 'A'
+      (board_index[1].to_i - 1) * 3 + 1
+    when 'B'
+      (board_index[1].to_i - 1) * 3 + 2
+    when 'C'
+      (board_index[1].to_i - 1) * 3 + 3
+    end
+  end
+end
+
 class Game
   include TextUtilities
+
+  attr_reader :cells, :current_player, :other_player
 
   def initialize
     @current_player = Player.new(1, '34', 'X')
     @other_player = Player.new(2, '33', 'O')
+    @board = Board.new
     @cells = []
     9.times do
       @cells.push(Cell.new)
@@ -86,64 +179,13 @@ class Game
   end
 
   def play_turn
-    draw_board
+    @board.draw_board(self)
     print colorize_text("It's your turn, #{@current_player}\n", @current_player.color)
-    get_player_selection
+    prompt_player_selection
     switch_current_player unless current_player_won?
   end
 
-  def draw_board
-    draw_column_indices
-    draw_top_border
-    draw_empty_board_lines(2)
-    draw_board_data
-    draw_bottom_border
-  end
-
-  def draw_column_indices
-    print "\n#{' ' * 12}A#{' ' * 5}B#{' ' * 5}C\n"
-  end
-
-  def draw_empty_board_lines(lines)
-    print("\n#{' ' * 6}|#{' ' * 23}|" * lines)
-  end
-
-  def draw_bottom_border
-    print "\n#{' ' * 6}|#{'_' * 23}|\n\n\n"
-  end
-
-  def draw_top_border
-    print "#{' ' * 7}#{'_' * 23}"
-  end
-
-  def draw_board_data
-    @cells.map(&:value).each_with_index do |value, index|
-      draw_row_index(index) if (index % 3).zero?
-      draw_cell_value(value, index)
-      if (index % 3) == 2
-        draw_right_border
-        draw_empty_board_lines(index == 8 ? 1 : 2)
-      end
-    end
-  end
-
-  def draw_row_index(index)
-    print "\n#{' ' * 3}#{index / 3 + 1}#{' ' * 2}|#{' ' * 1}"
-  end
-
-  def draw_right_border
-    print "#{' ' * 4}|"
-  end
-
-  def draw_cell_value(value, index)
-    print "#{' ' * 3}#{if get_winning_combo(@current_player.played_cells).include?(index)
-                         highlight_cell
-                       else
-                         "#{' ' * 1}#{color_cell(value)}#{' ' * 1}"
-                       end}"
-  end
-
-  def get_player_selection
+  def prompt_player_selection
     selection = nil
     loop do
       print "\nEnter the column and row index for the cell you want to play (e.g., 'A2' / 'c3')\n" \
@@ -151,41 +193,22 @@ class Game
       selection = gets.chomp.upcase
       break if valid_player_selection?(selection)
     end
-    mark_cell_played(board_index_to_cell_index(selection))
+    mark_cell_played(@board.board_index_to_cell_index(selection))
   end
 
   def valid_player_selection?(selection)
-    return true unless !valid_board_index?(selection) || cell_already_selected?(selection)
+    return true unless !@board.valid_board_index?(selection) || cell_already_selected?(selection)
 
     display_selection_error(selection)
   end
 
-  def valid_board_index?(board_index)
-    valid_rows = %w[1 2 3]
-    valid_columns = %w[A B C]
-    valid_columns.include?(board_index[0]) &&
-      valid_rows.include?(board_index[1]) &&
-      board_index.length == 2
-  end
-
-  def board_index_to_cell_index(board_index)
-    case board_index[0]
-    when 'A'
-      (board_index[1].to_i - 1) * 3 + 1
-    when 'B'
-      (board_index[1].to_i - 1) * 3 + 2
-    when 'C'
-      (board_index[1].to_i - 1) * 3 + 3
-    end
-  end
-
   def cell_already_selected?(board_index)
-    cell_addr = board_index_to_cell_index(board_index) - 1
+    cell_addr = @board.board_index_to_cell_index(board_index) - 1
     @cells[cell_addr].locked
   end
 
   def display_selection_error(selection)
-    if !valid_board_index?(selection)
+    if !@board.valid_board_index?(selection)
       puts colorize_text("\nInvalid column and row index. Try again!", '31')
     elsif cell_already_selected?(selection)
       puts colorize_text("\nThat cell was already played. Pick another!", '31')
@@ -204,28 +227,12 @@ class Game
   end
 
   def display_game_result
-    draw_board
+    @board.draw_board(self)
     if current_player_won?
       puts bold_text(colorize_text("#{@current_player} WINS!\n", @current_player.color))
     else
       puts bold_text("It's a DRAW\n")
     end
-  end
-
-  def color_cell(value)
-    case value
-    when @current_player.symbol
-      colorize_text(@current_player.symbol, @current_player.color)
-    when @other_player.symbol
-      colorize_text(@other_player.symbol, @other_player.color)
-
-    else
-      value
-    end
-  end
-
-  def highlight_cell
-    highlight_text(" #{bold_text(@current_player.symbol)} ", @current_player.color)
   end
 end
 
