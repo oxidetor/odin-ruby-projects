@@ -125,11 +125,11 @@ class Board
   def board_index_to_cell_index(board_index)
     case board_index[0]
     when 'A'
-      (board_index[1].to_i - 1) * 3 + 1
+      (board_index[1].to_i - 1) * 3
     when 'B'
-      (board_index[1].to_i - 1) * 3 + 2
+      (board_index[1].to_i - 1) * 3 + 1
     when 'C'
-      (board_index[1].to_i - 1) * 3 + 3
+      (board_index[1].to_i - 1) * 3 + 2
     end
   end
 end
@@ -203,7 +203,7 @@ class Game
   end
 
   def cell_already_selected?(board_index)
-    cell_addr = @board.board_index_to_cell_index(board_index) - 1
+    cell_addr = @board.board_index_to_cell_index(board_index)
     @cells[cell_addr].locked
   end
 
@@ -217,9 +217,9 @@ class Game
     end
   end
 
-  def mark_cell_played(selection)
-    @cells[selection - 1].value = @current_player.symbol
-    @current_player.played_cells.push(selection - 1)
+  def mark_cell_played(cell_index)
+    @cells[cell_index].value = @current_player.symbol
+    @current_player.played_cells.push(cell_index)
   end
 
   def switch_current_player
