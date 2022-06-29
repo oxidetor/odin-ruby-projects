@@ -47,6 +47,24 @@ end
 class Board
   include TextUtilities
 
+  attr_accessor :cells
+
+  def initialize
+    @cells = []
+    9.times do
+      @cells.push(Cell.new)
+    end
+  end
+
+  def all_cells_played?
+    @cells.all?(&:locked)
+  end
+
+  def cell_already_selected?(board_index)
+    cell_addr = board_index_to_cell_index(board_index)
+    @cells[cell_addr].locked
+  end
+
   def draw_board(game)
     draw_column_indices
     draw_top_border
@@ -68,7 +86,7 @@ class Board
   end
 
   def inject_game_data(game)
-    game.cells.map(&:value).each_with_index do |value, index|
+    @cells.map(&:value).each_with_index do |value, index|
       draw_row_index(index) if (index % 3).zero?
       draw_cell_value(value, index, game)
       if (index % 3) == 2
@@ -137,28 +155,20 @@ end
 class Game
   include TextUtilities
 
-  attr_reader :cells, :current_player, :other_player
+  attr_reader :current_player, :other_player
 
   def initialize
     @current_player = Player.new(1, '34', 'X')
     @other_player = Player.new(2, '33', 'O')
     @board = Board.new
-    @cells = []
-    9.times do
-      @cells.push(Cell.new)
-    end
   end
 
   def play_game
     loop do
       play_turn
-      break if current_player_won? || all_cells_played?
+      break if current_player_won? || @board.all_cells_played?
     end
     display_game_result
-  end
-
-  def all_cells_played?
-    @cells.all?(&:locked)
   end
 
   def current_player_won?
@@ -197,20 +207,15 @@ class Game
   end
 
   def valid_player_selection?(selection)
-    return true unless !@board.valid_board_index?(selection) || cell_already_selected?(selection)
+    return true unless !@board.valid_board_index?(selection) || @board.cell_already_selected?(selection)
 
     display_selection_error(selection)
-  end
-
-  def cell_already_selected?(board_index)
-    cell_addr = @board.board_index_to_cell_index(board_index)
-    @cells[cell_addr].locked
   end
 
   def display_selection_error(selection)
     if !@board.valid_board_index?(selection)
       puts colorize_text("\nInvalid column and row index. Try again!", '31')
-    elsif cell_already_selected?(selection)
+    elsif @board.cell_already_selected?(selection)
       puts colorize_text("\nThat cell was already played. Pick another!", '31')
     else
       puts colorize_text('Error!', '31')
@@ -218,7 +223,7 @@ class Game
   end
 
   def mark_cell_played(cell_index)
-    @cells[cell_index].value = @current_player.symbol
+    @board.cells[cell_index].value = @current_player.symbol
     @current_player.played_cells.push(cell_index)
   end
 
