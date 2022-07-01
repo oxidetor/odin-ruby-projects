@@ -49,6 +49,12 @@ class Board
 
   attr_accessor :cells
 
+  WIN_CONDITIONS = [
+    [0, 1, 2], [3, 4, 5], [6, 7, 8],
+    [0, 3, 6], [1, 4, 7], [2, 5, 8],
+    [0, 4, 8], [2, 4, 6]
+  ].freeze
+
   def initialize(game)
     @game = game
     @cells = []
@@ -106,7 +112,7 @@ class Board
   end
 
   def draw_cell_value(value, index)
-    print "#{' ' * 3}#{if @game.get_winning_combo(@game.current_player.played_cells).include?(index)
+    print "#{' ' * 3}#{if get_winning_combo(@game.current_player.played_cells).include?(index)
                          highlight_cell(@game.current_player)
                        else
                          "#{' ' * 1}#{color_cell(value, @game.current_player, @game.other_player)}#{' ' * 1}"
@@ -151,6 +157,14 @@ class Board
       (board_index[1].to_i - 1) * 3 + 2
     end
   end
+
+  def get_winning_combo(played_cells)
+    WIN_CONDITIONS.each do |win_condition|
+      winning_combo = played_cells & win_condition
+      return winning_combo if winning_combo.size >= 3
+    end
+    []
+  end
 end
 
 class Game
@@ -173,20 +187,7 @@ class Game
   end
 
   def current_player_won?
-    get_winning_combo(@current_player.played_cells).any?
-  end
-
-  def get_winning_combo(played_cells)
-    win_conditions = [
-      [0, 1, 2], [3, 4, 5], [6, 7, 8],
-      [0, 3, 6], [1, 4, 7], [2, 5, 8],
-      [0, 4, 8], [2, 4, 6]
-    ]
-    win_conditions.each do |win_condition|
-      winning_combo = played_cells & win_condition
-      return winning_combo if winning_combo.size >= 3
-    end
-    []
+    @board.get_winning_combo(@current_player.played_cells).any?
   end
 
   def play_turn
