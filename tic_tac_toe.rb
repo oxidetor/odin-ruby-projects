@@ -49,7 +49,8 @@ class Board
 
   attr_accessor :cells
 
-  def initialize
+  def initialize(game)
+    @game = game
     @cells = []
     9.times do
       @cells.push(Cell.new)
@@ -65,11 +66,11 @@ class Board
     @cells[cell_addr].locked
   end
 
-  def draw_board(game)
+  def draw_board
     draw_column_indices
     draw_top_border
     draw_empty_board_lines(2)
-    inject_game_data(game)
+    inject_game_data
     draw_bottom_border
   end
 
@@ -85,10 +86,10 @@ class Board
     print("\n#{' ' * 6}|#{' ' * 23}|" * lines)
   end
 
-  def inject_game_data(game)
+  def inject_game_data
     @cells.map(&:value).each_with_index do |value, index|
       draw_row_index(index) if (index % 3).zero?
-      draw_cell_value(value, index, game)
+      draw_cell_value(value, index)
       if (index % 3) == 2
         draw_right_border
         draw_empty_board_lines(index == 8 ? 1 : 2)
@@ -104,11 +105,11 @@ class Board
     print "#{' ' * 4}|"
   end
 
-  def draw_cell_value(value, index, game)
-    print "#{' ' * 3}#{if game.get_winning_combo(game.current_player.played_cells).include?(index)
-                         highlight_cell(game.current_player)
+  def draw_cell_value(value, index)
+    print "#{' ' * 3}#{if @game.get_winning_combo(@game.current_player.played_cells).include?(index)
+                         highlight_cell(@game.current_player)
                        else
-                         "#{' ' * 1}#{color_cell(value, game.current_player, game.other_player)}#{' ' * 1}"
+                         "#{' ' * 1}#{color_cell(value, @game.current_player, @game.other_player)}#{' ' * 1}"
                        end}"
   end
 
@@ -160,7 +161,7 @@ class Game
   def initialize
     @current_player = Player.new(1, '34', 'X')
     @other_player = Player.new(2, '33', 'O')
-    @board = Board.new
+    @board = Board.new(self)
   end
 
   def play_game
@@ -189,7 +190,7 @@ class Game
   end
 
   def play_turn
-    @board.draw_board(self)
+    @board.draw_board
     print colorize_text("It's your turn, #{@current_player}\n", @current_player.color)
     prompt_player_selection
     switch_current_player unless current_player_won?
@@ -232,7 +233,7 @@ class Game
   end
 
   def display_game_result
-    @board.draw_board(self)
+    @board.draw_board
     if current_player_won?
       puts bold_text(colorize_text("#{@current_player} WINS!\n", @current_player.color))
     else
